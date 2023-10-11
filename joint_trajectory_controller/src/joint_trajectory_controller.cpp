@@ -205,9 +205,10 @@ controller_interface::return_type JointTrajectoryController::update(
 
     // find segment for current timestamp
     TrajectoryPointConstIter start_segment_itr, end_segment_itr;
-    const bool valid_point =
-      (*traj_point_active_ptr_)
-        ->sample(time, interpolation_method_, state_desired_, start_segment_itr, end_segment_itr);
+    const bool valid_point = (*traj_point_active_ptr_)
+                               ->sample(
+                                 time, interpolation_method_, state_desired_, start_segment_itr,
+                                 end_segment_itr, v_scale_);
 
     if (valid_point)
     {
@@ -1175,6 +1176,7 @@ void JointTrajectoryController::v_scale_callback(const std::shared_ptr<std_msgs:
   if (0.0 <= msg->data && msg->data <= 1.0)
   {
     v_scale_ = msg->data;
+    RCLCPP_INFO_STREAM(get_node()->get_logger(), "v_scale is set to: " << v_scale_);
   }
   else
   {
