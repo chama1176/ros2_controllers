@@ -61,7 +61,8 @@ bool Trajectory::sample(
   const rclcpp::Time & sample_time,
   const interpolation_methods::InterpolationMethod interpolation_method,
   trajectory_msgs::msg::JointTrajectoryPoint & output_state,
-  TrajectoryPointConstIter & start_segment_itr, TrajectoryPointConstIter & end_segment_itr)
+  TrajectoryPointConstIter & start_segment_itr, TrajectoryPointConstIter & end_segment_itr,
+  const double & v_scale)
 {
   THROW_ON_NULLPTR(trajectory_msg_)
 
@@ -79,12 +80,16 @@ bool Trajectory::sample(
     {
       trajectory_start_time_ = sample_time;
     }
+    last_target_time_ = sample_time;
+    last_sampled_ros_time_ = sample_time;
 
     sampled_already_ = true;
   }
+  const rclcpp::Time target_time =
+    (sample_time - last_sampled_ros_time_) * v_scale + last_target_time_;
 
   // sampling before the current point
-  if (sample_time < time_before_traj_msg_)
+  if (target_time < time_before_traj_msg_)
   {
     return false;
   }
@@ -95,7 +100,7 @@ bool Trajectory::sample(
     trajectory_start_time_ + first_point_in_msg.time_from_start;
 
   // current time hasn't reached traj time of the first point in the msg yet
-  if (sample_time < first_point_timestamp)
+  if (target_time < first_point_timestamp)
   {
     // If interpolation is disabled, just forward the next waypoint
     if (interpolation_method == interpolation_methods::InterpolationMethod::NONE)
@@ -111,7 +116,7 @@ bool Trajectory::sample(
 
       interpolate_between_points(
         time_before_traj_msg_, state_before_traj_msg_, first_point_timestamp, first_point_in_msg,
-        sample_time, output_state);
+        target_time, output_state);
     }
     start_segment_itr = begin();  // no segments before the first
     end_segment_itr = begin();
@@ -128,7 +133,7 @@ bool Trajectory::sample(
     const rclcpp::Time t0 = trajectory_start_time_ + point.time_from_start;
     const rclcpp::Time t1 = trajectory_start_time_ + next_point.time_from_start;
 
-    if (sample_time >= t0 && sample_time < t1)
+    if (target_time >= t0 && target_time < t1)
     {
       // If interpolation is disabled, just forward the next waypoint
       if (interpolation_method == interpolation_methods::InterpolationMethod::NONE)
@@ -142,10 +147,13 @@ bool Trajectory::sample(
         deduce_from_derivatives(
           point, next_point, state_before_traj_msg_.positions.size(), (t1 - t0).seconds());
 
-        interpolate_between_points(t0, point, t1, next_point, sample_time, output_state);
+        interpolate_between_points(t0, point, t1, next_point, target_time, output_state);
       }
       start_segment_itr = begin() + i;
       end_segment_itr = begin() + (i + 1);
+      last_target_time_ = target_time;
+      last_sampled_ros_time_ = sample_time;
+
       return true;
     }
   }
@@ -163,6 +171,7 @@ bool Trajectory::sample(
   {
     output_state.accelerations.resize(output_state.positions.size(), 0.0);
   }
+
   return true;
 }
 

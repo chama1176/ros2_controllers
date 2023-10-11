@@ -89,7 +89,8 @@ public:
     const rclcpp::Time & sample_time,
     const interpolation_methods::InterpolationMethod interpolation_method,
     trajectory_msgs::msg::JointTrajectoryPoint & output_state,
-    TrajectoryPointConstIter & start_segment_itr, TrajectoryPointConstIter & end_segment_itr);
+    TrajectoryPointConstIter & start_segment_itr, TrajectoryPointConstIter & end_segment_itr,
+    const double & v_scale = 1.0);
 
   /**
    * Do interpolation between 2 states given a time in between their respective timestamps
@@ -155,6 +156,8 @@ private:
   trajectory_msgs::msg::JointTrajectoryPoint state_before_traj_msg_;
 
   bool sampled_already_ = false;
+  rclcpp::Time last_target_time_;
+  rclcpp::Time last_sampled_ros_time_;
 };
 
 /**

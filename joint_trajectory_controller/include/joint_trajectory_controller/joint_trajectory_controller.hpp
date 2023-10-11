@@ -42,6 +42,7 @@
 #include "realtime_tools/realtime_buffer.h"
 #include "realtime_tools/realtime_publisher.h"
 #include "realtime_tools/realtime_server_goal_handle.h"
+#include "std_msgs/msg/float64.hpp"
 #include "trajectory_msgs/msg/joint_trajectory.hpp"
 #include "trajectory_msgs/msg/joint_trajectory_point.hpp"
 
@@ -177,6 +178,8 @@ protected:
   bool subscriber_is_active_ = false;
   rclcpp::Subscription<trajectory_msgs::msg::JointTrajectory>::SharedPtr joint_command_subscriber_ =
     nullptr;
+  rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr v_scale_subscriber_ = nullptr;
+  double v_scale_ = 1.0;
 
   rclcpp::Service<control_msgs::srv::QueryTrajectoryState>::SharedPtr query_state_srv_;
 
@@ -211,6 +214,8 @@ protected:
   // callback for topic interface
   JOINT_TRAJECTORY_CONTROLLER_PUBLIC
   void topic_callback(const std::shared_ptr<trajectory_msgs::msg::JointTrajectory> msg);
+  JOINT_TRAJECTORY_CONTROLLER_PUBLIC
+  void v_scale_callback(const std::shared_ptr<std_msgs::msg::Float64> msg);
 
   // callbacks for action_server_
   JOINT_TRAJECTORY_CONTROLLER_PUBLIC

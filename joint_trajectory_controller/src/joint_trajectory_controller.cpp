@@ -576,7 +576,7 @@ void JointTrajectoryController::query_state_service(
     response->success = (*traj_point_active_ptr_)
                           ->sample(
                             static_cast<rclcpp::Time>(request->time), interpolation_method_,
-                            state_requested, start_segment_itr, end_segment_itr);
+                            state_requested, start_segment_itr, end_segment_itr, v_scale_);
     // If the requested sample time precedes the trajectory finish time respond as failure
     if (response->success)
     {
@@ -807,6 +807,10 @@ controller_interface::CallbackReturn JointTrajectoryController::on_configure(
     get_node()->create_subscription<trajectory_msgs::msg::JointTrajectory>(
       "~/joint_trajectory", rclcpp::SystemDefaultsQoS(),
       std::bind(&JointTrajectoryController::topic_callback, this, std::placeholders::_1));
+
+  v_scale_subscriber_ = get_node()->create_subscription<std_msgs::msg::Float64>(
+    "~/v_scale", rclcpp::SystemDefaultsQoS(),
+    std::bind(&JointTrajectoryController::v_scale_callback, this, std::placeholders::_1));
 
   // State publisher
   RCLCPP_INFO(logger, "Controller state will be published at %.2f Hz.", params_.state_publish_rate);
@@ -1051,6 +1055,7 @@ bool JointTrajectoryController::reset()
 {
   subscriber_is_active_ = false;
   joint_command_subscriber_.reset();
+  v_scale_subscriber_.reset();
 
   for (const auto & pid : pids_)
   {
@@ -1162,6 +1167,19 @@ void JointTrajectoryController::topic_callback(
   if (subscriber_is_active_)
   {
     add_new_trajectory_msg(msg);
+  }
+};
+
+void JointTrajectoryController::v_scale_callback(const std::shared_ptr<std_msgs::msg::Float64> msg)
+{
+  if (0.0 <= msg->data && msg->data <= 1.0)
+  {
+    v_scale_ = msg->data;
+  }
+  else
+  {
+    RCLCPP_ERROR_STREAM(
+      get_node()->get_logger(), "Recieved v_scale value is out of bound: " << msg->data);
   }
 };
 
