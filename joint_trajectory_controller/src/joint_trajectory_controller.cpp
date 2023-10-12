@@ -1176,7 +1176,7 @@ void JointTrajectoryController::v_scale_callback(const std::shared_ptr<std_msgs:
   if (0.0 <= msg->data && msg->data <= 1.0)
   {
     v_scale_ = msg->data;
-    RCLCPP_INFO_STREAM(get_node()->get_logger(), "v_scale is set to: " << v_scale_);
+    // RCLCPP_INFO_STREAM(get_node()->get_logger(), "v_scale is set to: " << v_scale_);
   }
   else
   {
