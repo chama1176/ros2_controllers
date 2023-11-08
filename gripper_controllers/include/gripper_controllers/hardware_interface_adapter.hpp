@@ -137,7 +137,7 @@ public:
     const auto k_d = auto_declare<double>(node, prefix + ".d", 0.0);
     const auto i_clamp = auto_declare<double>(node, prefix + ".i_clamp", 0.0);
     // Initialize PID
-    pid_ = std::make_shared<control_toolbox::Pid>(k_p, k_i, k_d, i_clamp, -i_clamp);
+    pid_ = std::make_shared<control_toolbox::Pid>(k_p, k_i, k_d, i_clamp, -i_clamp, true);
     return true;
   }
 
